@@ -9,15 +9,14 @@ CONFIG += c++11
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    aes_128.cpp \
-    aes_256.cpp \
+    aes.cpp \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
-    aes_128.h \
-    aes_256.h \
-    mainwindow.h
+    aes.h \
+    mainwindow.h \
+    tables.h
 
 FORMS += \
     mainwindow.ui

@@ -5,7 +5,7 @@
 #include <QString>
 #include <QVector>
 
-#include "aes_128.h"
+#include "aes.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -26,6 +26,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    AES_128 aes;
+    aes cryptor;
 };
 #endif // MAINWINDOW_H

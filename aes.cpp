@@ -1,25 +1,28 @@
-#include "aes_128.h"
+#include "aes.h"
+#include "tables.h"
 
-AES_128::AES_128()
-{
+aes::aes()
+{}
 
+void aes::setMode(mode m) {
+    if (m == aes128)
+        settings = aes128Settings;
+    else
+        settings = aes256Settings;
 }
 
-array<unsigned char, 16> AES_128::encrypt(array<unsigned char, 16> input_bytes, QVector<unsigned char> key)
-{
+array<unsigned char, 16> aes::encrypt(array<unsigned char, 16> input_bytes, QVector<unsigned char> key) {
     array<array<unsigned char, nb>, 4> state;
-    for (unsigned int r = 0; r < 4; r++)
-    {
-        for (unsigned int c = 0; c < nb; c++) state[r][c] = input_bytes[r + 4 * c];
+    for (uint r = 0; r < 4; r++) {
+        for (uint c = 0; c < nb; c++) state[r][c] = input_bytes[r + 4 * c];
     }
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = key_expansion(key);
+    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
 
     state = addRoundKey(state, key_schedule);
 
-    unsigned int rnd;
-    for (rnd = 1; rnd < nr; rnd++)
-    {
+    uint rnd;
+    for (rnd = 1; rnd < nr; rnd++) {
         state = subBytes(state);
         state = shiftRows(state);
         state = mixColumns(state);
@@ -31,15 +34,14 @@ array<unsigned char, 16> AES_128::encrypt(array<unsigned char, 16> input_bytes, 
     state = addRoundKey(state, key_schedule, rnd);
 
     array<unsigned char, 16> output;
-    for (unsigned int r = 0; r < 4; r++)
-    {
-         for (unsigned int c = 0; c < nb; c++) output[r + 4 * c] = state[r][c];
+    for (uint r = 0; r < 4; r++) {
+         for (uint c = 0; c < nb; c++) output[r + 4 * c] = state[r][c];
     }
 
     return output;
 }
 
-array<unsigned char, 16> AES_128::decrypt(array<unsigned char, 16> cipher, QVector<unsigned char>  key)
+array<unsigned char, 16> aes::decrypt(array<unsigned char, 16> cipher, QVector<unsigned char>  key)
 {
     array<array<unsigned char, nb>, 4> state;
     for (unsigned int r = 0; r < 4; r++)
@@ -47,7 +49,7 @@ array<unsigned char, 16> AES_128::decrypt(array<unsigned char, 16> cipher, QVect
         for (unsigned int c = 0; c < nb; c++) state[r][c] = cipher[r + 4 * c];
     }
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = key_expansion(key);
+    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
 
     state = addRoundKey(state, key_schedule, nr);
 
@@ -75,8 +77,7 @@ array<unsigned char, 16> AES_128::decrypt(array<unsigned char, 16> cipher, QVect
     return output;
 }
 
-array<array<unsigned char, nb>, 4> AES_128::subBytes(array<array<unsigned char, nb>, 4> state, bool inv)
-{
+array<array<unsigned char, nb>, 4> aes::subBytes(array<array<unsigned char, nb>, 4> state, bool inv) {
     array<unsigned char, 256> box;
 
     if (inv == false) box = sbox;
@@ -86,10 +87,8 @@ array<array<unsigned char, nb>, 4> AES_128::subBytes(array<array<unsigned char, 
     unsigned long long col;
     unsigned char box_elem;
 
-    for (unsigned long long i = 0; i < state.size(); i++)
-    {
-       for (unsigned long long j = 0; j < state[i].size(); j++)
-       {
+    for (unsigned long long i = 0; i < state.size(); i++) {
+       for (unsigned long long j = 0; j < state[i].size(); j++) {
            row = state[i][j] / 0x10;
            col = state[i][j] % 0x10;
 
@@ -101,17 +100,13 @@ array<array<unsigned char, nb>, 4> AES_128::subBytes(array<array<unsigned char, 
     return state;
 }
 
-array<unsigned char, nb> AES_128::leftRightShift(array<unsigned char, nb> array, unsigned int count, bool inv)
-{
+array<unsigned char, nb> aes::leftRightShift(array<unsigned char, nb> array, unsigned int count, bool inv) {
     unsigned char el;
 
-    if (inv == false)
-    {
-        while(count--)
-        {
+    if (inv == false) {
+        while(count--) {
             el = array[0];
-            for(unsigned long long i = 0; i < array.size() - 1; i++)
-            {
+            for(unsigned long long i = 0; i < array.size() - 1; i++) {
                 array[i] = array[i + 1];
             }
             array[array.size() - 1] = el;
@@ -119,11 +114,9 @@ array<unsigned char, nb> AES_128::leftRightShift(array<unsigned char, nb> array,
     }
     else
     {
-        while(count--)
-        {
+        while(count--) {
             el = array[array.size() - 1];
-            for(unsigned long long i = array.size() - 1; i > 0; i--)
-            {
+            for(unsigned long long i = array.size() - 1; i > 0; i--) {
                 array[i] = array[i - 1];
             }
             array[0] = el;
@@ -132,12 +125,10 @@ array<unsigned char, nb> AES_128::leftRightShift(array<unsigned char, nb> array,
     return array;
 }
 
-array<array<unsigned char, nb>, 4> AES_128::shiftRows(array<array<unsigned char, nb>, 4> state, bool inv)
-{
+array<array<unsigned char, nb>, 4> aes::shiftRows(array<array<unsigned char, nb>, 4> state, bool inv) {
     unsigned int count = 1;
 
-    for(unsigned long long i = 1; i < state.size(); i++)
-    {
+    for(unsigned long long i = 1; i < state.size(); i++) {
         state[i] = leftRightShift(state[i], count, inv);
         count++;
     }
@@ -145,9 +136,8 @@ array<array<unsigned char, nb>, 4> AES_128::shiftRows(array<array<unsigned char,
     return state;
 }
 
-unsigned char AES_128::mul_by_02(unsigned char num)
-{
-    unsigned char res;
+uint8_t aes::mul_by_02(uint8_t num) {
+    uint8_t res;
 
     if (num < 0x80) res = (num << 1);
     else res = (num << 1) ^ 0x1b;
@@ -156,36 +146,31 @@ unsigned char AES_128::mul_by_02(unsigned char num)
 }
 
 
-unsigned char AES_128::mul_by_03(unsigned char num)
-{
+uint8_t aes::mul_by_03(uint8_t num) {
     return (mul_by_02(num) ^ num);
 }
 
 
-unsigned char AES_128::mul_by_09(unsigned char num)
-{
+uint8_t aes::mul_by_09(uint8_t num) {
     return mul_by_02(mul_by_02(mul_by_02(num))) ^ num;
 }
 
 
-unsigned char AES_128::mul_by_0b(unsigned char num)
-{
+uint8_t aes::mul_by_0b(uint8_t num) {
     return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(num) ^ num;
 }
 
 
-unsigned char AES_128::mul_by_0d(unsigned char num)
-{
+uint8_t aes::mul_by_0d(uint8_t num) {
     return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(mul_by_02(num)) ^ num;
 }
 
 
-unsigned char AES_128::mul_by_0e(unsigned char num)
-{
+uint8_t aes::mul_by_0e(uint8_t num) {
     return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(mul_by_02(num)) ^ mul_by_02(num);
 }
 
-array<array<unsigned char, nb>, 4> AES_128::mixColumns(array<array<unsigned char, nb>, 4> state, bool inv)
+array<array<unsigned char, nb>, 4> aes::mixColumns(array<array<unsigned char, nb>, 4> state, bool inv)
 {
     unsigned char s0, s1, s2, s3;
 
@@ -214,11 +199,11 @@ array<array<unsigned char, nb>, 4> AES_128::mixColumns(array<array<unsigned char
     return state;
 }
 
-array<array<unsigned char, nb>, 4> AES_128::addRoundKey(array<array<unsigned char, nb>, 4> state, array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round)
+array<array<unsigned char, nb>, 4> aes::addRoundKey(array<array<unsigned char, nb>, 4> state, array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round)
 {
     unsigned char s0, s1, s2, s3;
 
-    for(unsigned long long col = 0; col < nk; col++)
+    for(unsigned long long col = 0; col < nb; col++)
     {
         s0 = state[0][col] ^ key_schedule[0][nb * round + col];
         s1 = state[1][col] ^ key_schedule[1][nb * round + col];
@@ -234,7 +219,7 @@ array<array<unsigned char, nb>, 4> AES_128::addRoundKey(array<array<unsigned cha
     return state;
 }
 
-array<array<unsigned char, nb * (nr + 1)>, 4> AES_128::key_expansion(QVector<unsigned char> key)
+array<array<unsigned char, nb * (nr + 1)>, 4> aes::keyExpansion(QVector<unsigned char> key)
 {
     QVector <unsigned char> key_symbols = key;
 
@@ -286,13 +271,3 @@ array<array<unsigned char, nb * (nr + 1)>, 4> AES_128::key_expansion(QVector<uns
 
     return key_schedule;
 }
-
-
-
-
-
-
-
-
-
-

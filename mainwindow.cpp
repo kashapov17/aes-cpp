@@ -36,8 +36,8 @@ QVector<unsigned char> qstringToBite(QString text)
 
 void MainWindow::on_encryptButton_clicked()
 {
-    QVector<unsigned char> bitesText = qstringToBite(ui->plainTextEdit->toPlainText());
-    QVector<unsigned char> key = qstringToBite(ui->lineKeyEdit->text());
+    QVector<unsigned char> bitesText = qstringToBite(ui->plainTextEdit->toPlainText().trimmed());
+    QVector<unsigned char> key = qstringToBite(ui->lineKeyEdit->text().trimmed());
     QString bitesCode;
     array<unsigned char, 16> box;
 
@@ -48,10 +48,10 @@ void MainWindow::on_encryptButton_clicked()
 
         if(n == 16)
         {
-            box = aes.encrypt(box, key);
+            box = cryptor.encrypt(box, key);
             for(auto j:box)
             {
-                bitesCode += QString::number(j) + " ";
+                bitesCode += QString::number(j, 16) + " ";
             }
             n = 0;
         }
@@ -63,7 +63,7 @@ void MainWindow::on_encryptButton_clicked()
 
         if(n == 16)
         {
-            box = aes.encrypt(box, key);
+            box = cryptor.encrypt(box, key);
             for(auto j:box)
             {
                 bitesCode += QString::number(j) + " ";
@@ -72,13 +72,13 @@ void MainWindow::on_encryptButton_clicked()
         }
     }
 
-    ui->plainTextEdit->clear();
-    ui->plainTextEdit->appendPlainText(bitesCode);
+    ui->plainTextEdit_2->clear();
+    ui->plainTextEdit_2->appendPlainText(bitesCode);
 }
 
 void MainWindow::on_decryptButton_clicked()
 {
-    QString bitesCode = ui->plainTextEdit->toPlainText();
+    QString bitesCode = ui->plainTextEdit_2->toPlainText();
     QVector<unsigned char> key = qstringToBite(ui->lineKeyEdit->text());
     QVector<unsigned char> bitesText;
     array<unsigned char, 16> box;
@@ -96,7 +96,7 @@ void MainWindow::on_decryptButton_clicked()
 
         if(n == 16)
         {
-            box = aes.decrypt(box, key);
+            box = cryptor.decrypt(box, key);
             for(auto j:box) bitesText.push_back(j);
             n = 0;
         }
