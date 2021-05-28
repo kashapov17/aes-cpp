@@ -11,29 +11,28 @@ void aes::setMode(mode m) {
         settings = aes256Settings;
 }
 
-array<unsigned char, 16> aes::encrypt(array<unsigned char, 16> input_bytes, QVector<unsigned char> key) {
-    array<array<unsigned char, nb>, 4> state;
+array<uint8_t, 16> aes::encrypt(array<uint8_t, 16> plainBytes, QVector<uint8_t> key) {
     for (uint r = 0; r < 4; r++) {
-        for (uint c = 0; c < nb; c++) state[r][c] = input_bytes[r + 4 * c];
+        for (uint c = 0; c < nb; c++) state[r][c] = plainBytes[r + 4 * c];
     }
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
+    array<array<uint8_t, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
 
-    state = addRoundKey(state, key_schedule);
+    addRoundKey(key_schedule);
 
     uint rnd;
     for (rnd = 1; rnd < nr; rnd++) {
-        state = subBytes(state);
-        state = shiftRows(state);
-        state = mixColumns(state);
-        state = addRoundKey(state, key_schedule, rnd);
+        subBytes();
+        shiftRows();
+        mixColumns();
+        addRoundKey(key_schedule, rnd);
     }
 
-    state = subBytes(state);
-    state = shiftRows(state);
-    state = addRoundKey(state, key_schedule, rnd);
+    subBytes();
+    shiftRows();
+    addRoundKey(key_schedule, rnd);
 
-    array<unsigned char, 16> output;
+    array<uint8_t, 16> output;
     for (uint r = 0; r < 4; r++) {
          for (uint c = 0; c < nb; c++) output[r + 4 * c] = state[r][c];
     }
@@ -41,54 +40,52 @@ array<unsigned char, 16> aes::encrypt(array<unsigned char, 16> input_bytes, QVec
     return output;
 }
 
-array<unsigned char, 16> aes::decrypt(array<unsigned char, 16> cipher, QVector<unsigned char>  key)
+array<uint8_t, 16> aes::decrypt(array<uint8_t, 16> cipher, QVector<uint8_t>  key)
 {
-    array<array<unsigned char, nb>, 4> state;
-    for (unsigned int r = 0; r < 4; r++)
-    {
-        for (unsigned int c = 0; c < nb; c++) state[r][c] = cipher[r + 4 * c];
+    for (uint r = 0; r < 4; r++) {
+        for (uint c = 0; c < nb; c++) state[r][c] = cipher[r + 4 * c];
     }
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
+    array<array<uint8_t, nb * (nr + 1)>, 4> key_schedule = keyExpansion(key);
 
-    state = addRoundKey(state, key_schedule, nr);
+    addRoundKey(key_schedule, nr);
 
-    unsigned int rnd = nr - 1;
+    uint rnd = nr - 1;
     while (rnd >= 1)
     {
-        state = shiftRows(state, true);
-        state = subBytes(state, true);
-        state = addRoundKey(state, key_schedule, rnd);
-        state = mixColumns(state, true);
+        shiftRows(true);
+        subBytes(true);
+        addRoundKey(key_schedule, rnd);
+        mixColumns(true);
 
         rnd--;
     }
 
-    state = shiftRows(state, true);
-    state = subBytes(state, true);
-    state = addRoundKey(state, key_schedule, rnd);
+    shiftRows(true);
+    subBytes(true);
+    addRoundKey(key_schedule, rnd);
 
-    array<unsigned char, 16> output;
-    for (unsigned int r = 0; r < 4; r++)
+    array<uint8_t, 16> output;
+    for (uint r = 0; r < 4; r++)
     {
-         for (unsigned int c = 0; c < nb; c++) output[r + 4 * c] = state[r][c];
+         for (uint c = 0; c < nb; c++) output[r + 4 * c] = state[r][c];
     }
 
     return output;
 }
 
-array<array<unsigned char, nb>, 4> aes::subBytes(array<array<unsigned char, nb>, 4> state, bool inv) {
-    array<unsigned char, 256> box;
+void aes::subBytes(bool inv) {
+    array<uint8_t, 256> box;
 
     if (inv == false) box = sbox;
     else  box = inv_sbox;
 
-    unsigned long long row;
-    unsigned long long col;
-    unsigned char box_elem;
+    uint row;
+    uint col;
+    uint8_t box_elem;
 
-    for (unsigned long long i = 0; i < state.size(); i++) {
-       for (unsigned long long j = 0; j < state[i].size(); j++) {
+    for (uint i = 0; i < state.size(); i++) {
+       for (uint j = 0; j < state[i].size(); j++) {
            row = state[i][j] / 0x10;
            col = state[i][j] % 0x10;
 
@@ -96,27 +93,24 @@ array<array<unsigned char, nb>, 4> aes::subBytes(array<array<unsigned char, nb>,
            state[i][j] = box_elem;
        }
     }
-
-    return state;
 }
 
-array<unsigned char, nb> aes::leftRightShift(array<unsigned char, nb> array, unsigned int count, bool inv) {
-    unsigned char el;
+array<uint8_t, nb> aes::leftRightShift(array<uint8_t, nb> array, uint count, bool inv) {
+    uint8_t el;
 
     if (inv == false) {
         while(count--) {
             el = array[0];
-            for(unsigned long long i = 0; i < array.size() - 1; i++) {
+            for(uint i = 0; i < array.size() - 1; i++) {
                 array[i] = array[i + 1];
             }
             array[array.size() - 1] = el;
         }
     }
-    else
-    {
+    else {
         while(count--) {
             el = array[array.size() - 1];
-            for(unsigned long long i = array.size() - 1; i > 0; i--) {
+            for(uint i = array.size() - 1; i > 0; i--) {
                 array[i] = array[i - 1];
             }
             array[0] = el;
@@ -125,15 +119,13 @@ array<unsigned char, nb> aes::leftRightShift(array<unsigned char, nb> array, uns
     return array;
 }
 
-array<array<unsigned char, nb>, 4> aes::shiftRows(array<array<unsigned char, nb>, 4> state, bool inv) {
-    unsigned int count = 1;
+void aes::shiftRows(bool inv) {
+    uint count = 1;
 
-    for(unsigned long long i = 1; i < state.size(); i++) {
+    for(uint i = 1; i < state.size(); i++) {
         state[i] = leftRightShift(state[i], count, inv);
         count++;
     }
-
-    return state;
 }
 
 uint8_t aes::mul_by_02(uint8_t num) {
@@ -170,21 +162,17 @@ uint8_t aes::mul_by_0e(uint8_t num) {
     return mul_by_02(mul_by_02(mul_by_02(num))) ^ mul_by_02(mul_by_02(num)) ^ mul_by_02(num);
 }
 
-array<array<unsigned char, nb>, 4> aes::mixColumns(array<array<unsigned char, nb>, 4> state, bool inv)
-{
-    unsigned char s0, s1, s2, s3;
+void aes::mixColumns(bool inv) {
+    uint8_t s0, s1, s2, s3;
 
-    for(unsigned long long i = 0; i < nb; i++)
-    {
-        if(inv == false)
-        {
+    for(uint i = 0; i < nb; i++) {
+        if(!inv) {
             s0 = mul_by_02(state[0][i]) ^ mul_by_03(state[1][i]) ^ state[2][i] ^ state[3][i];
             s1 = state[0][i] ^ mul_by_02(state[1][i]) ^ mul_by_03(state[2][i]) ^ state[3][i];
             s2 = state[0][i] ^ state[1][i] ^ mul_by_02(state[2][i]) ^ mul_by_03(state[3][i]);
             s3 = mul_by_03(state[0][i]) ^ state[1][i] ^ state[2][i] ^ mul_by_02(state[3][i]);
         }
-        else
-        {
+        else {
             s0 = mul_by_0e(state[0][i]) ^ mul_by_0b(state[1][i]) ^ mul_by_0d(state[2][i]) ^ mul_by_09(state[3][i]);
             s1 = mul_by_09(state[0][i]) ^ mul_by_0e(state[1][i]) ^ mul_by_0b(state[2][i]) ^ mul_by_0d(state[3][i]);
             s2 = mul_by_0d(state[0][i]) ^ mul_by_09(state[1][i]) ^ mul_by_0e(state[2][i]) ^ mul_by_0b(state[3][i]);
@@ -195,16 +183,12 @@ array<array<unsigned char, nb>, 4> aes::mixColumns(array<array<unsigned char, nb
         state[2][i] = s2;
         state[3][i] = s3;
     }
-
-    return state;
 }
 
-array<array<unsigned char, nb>, 4> aes::addRoundKey(array<array<unsigned char, nb>, 4> state, array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round)
-{
-    unsigned char s0, s1, s2, s3;
+void aes::addRoundKey(array<array<uint8_t, nb * (nr + 1)>, 4> key_schedule, uint round) {
+    uint8_t s0, s1, s2, s3;
 
-    for(unsigned long long col = 0; col < nb; col++)
-    {
+    for(uint col = 0; col < nb; col++) {
         s0 = state[0][col] ^ key_schedule[0][nb * round + col];
         s1 = state[1][col] ^ key_schedule[1][nb * round + col];
         s2 = state[2][col] ^ key_schedule[2][nb * round + col];
@@ -215,59 +199,48 @@ array<array<unsigned char, nb>, 4> aes::addRoundKey(array<array<unsigned char, n
         state[2][col] = s2;
         state[3][col] = s3;
     }
-
-    return state;
 }
 
-array<array<unsigned char, nb * (nr + 1)>, 4> aes::keyExpansion(QVector<unsigned char> key)
+array<array<uint8_t, nb * (nr + 1)>, 4> aes::keyExpansion(QVector<uint8_t> key)
 {
-    QVector <unsigned char> key_symbols = key;
+    QVector <uint8_t> key_symbols = key;
 
-    if (key_symbols.size() < 4 * nk)
-    {
-        for (unsigned long long i = 4 * nk - key_symbols.size(); i > 0; i--) key_symbols.push_back(0x01);
+    if (key_symbols.size() < 4 * nk) {
+        for (uint i = 4 * nk - key_symbols.size(); i > 0; i--) key_symbols.push_back(0x01);
     }
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule;
+    array<array<uint8_t, nb * (nr + 1)>, 4> key_schedule;
 
-    for (unsigned int r = 0; r < 4; r++)
-    {
-        for (unsigned int c = 0; c < nk; c++) key_schedule[r][c] = key_symbols[r + 4 * c];
+    for (uint r = 0; r < 4; r++) {
+        for (uint c = 0; c < nk; c++) key_schedule[r][c] = key_symbols[r + 4 * c];
     }
 
-    unsigned char s, sbox_row, sbox_col, sbox_elem ;
-    array<unsigned char, 4> tmp;
-    for(int col = nk; col < nb*(nr + 1); col++)
-    {
-        if (col % nk == 0)
-        {
-            for(unsigned long long row = 1; row < 4; row++) tmp[row - 1] =  key_schedule[row][col - 1];
+    uint8_t s, sbox_row, sbox_col, sbox_elem ;
+    array<uint8_t, 4> tmp;
+    for(int col = nk; col < nb*(nr + 1); col++) {
+        if (col % nk == 0) {
+            for(uint row = 1; row < 4; row++) tmp[row - 1] =  key_schedule[row][col - 1];
             tmp[3] = key_schedule[0][col - 1];
 
-            for (unsigned long long j = 0; j < tmp.size(); j++)
-            {
+            for (uint j = 0; j < tmp.size(); j++) {
                 sbox_row = tmp[j] / 0x10;
                 sbox_col = tmp[j] % 0x10;
                 sbox_elem = sbox[16 * sbox_row + sbox_col];
                 tmp[j] = sbox_elem;
             }
 
-            for(unsigned long long row = 0; row < 4; row++)
-            {
+            for(uint row = 0; row < 4; row++) {
                 s = (key_schedule[row][col - 4]) ^ (tmp[row]) ^ (con[row][int(col / nk - 1)]);
                 key_schedule[row][col] = s;
             }
 
         }
-        else
-        {
-            for (unsigned long long row = 0; row < 4; row++)
-            {
+        else {
+            for (uint row = 0; row < 4; row++) {
                 s = key_schedule[row][col - 4] ^ key_schedule[row][col - 1];
                 key_schedule[row][col] = s;
             }
         }
     }
-
     return key_schedule;
 }

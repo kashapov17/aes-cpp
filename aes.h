@@ -27,10 +27,13 @@ private:
 
     void setMode(mode m);
 
-    array<array<unsigned char, nb>, 4> subBytes(array<array<unsigned char, nb>, 4> state, bool inv = false);
-    array<array<unsigned char, nb>, 4> shiftRows(array<array<unsigned char, nb>, 4> state, bool inv = false);
-    array<array<unsigned char, nb>, 4> mixColumns(array<array<unsigned char, nb>, 4> state, bool inv = false);
-    array<array<unsigned char, nb>, 4> addRoundKey(array<array<unsigned char, nb>, 4> state, array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round = 0);
+    const uint blockSize = 16;
+    array<array<unsigned char, nb>, 4> state;
+
+    void subBytes(bool inv = false);
+    void shiftRows(bool inv = false);
+    void mixColumns(bool inv = false);
+    void addRoundKey(array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round = 0);
 
     array<array<unsigned char, nb * (nr + 1)>, 4> keyExpansion(QVector<unsigned char> key);
 
