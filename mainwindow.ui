@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>578</width>
-    <height>290</height>
+    <width>575</width>
+    <height>269</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -40,6 +40,11 @@
          <item>
           <property name="text">
            <string>aes256</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>aes192</string>
           </property>
          </item>
          <item>
@@ -125,8 +130,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>578</width>
-     <height>23</height>
+     <width>575</width>
+     <height>21</height>
     </rect>
    </property>
   </widget>

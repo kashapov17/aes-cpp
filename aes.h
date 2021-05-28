@@ -2,7 +2,6 @@
 #define AES_H
 
 #include <QVector>
-#include <array>
 #include <QByteArray>
 
 using std::array;
@@ -14,7 +13,6 @@ const int nk = 8;
 class aes
 {
 private:
-    enum mode {aes128, aes192, aes256};
     struct aesSettings {
         uint nb;
         uint nr;
@@ -25,19 +23,17 @@ private:
     aesSettings aes192Settings = {.nb = 4, .nr = 12, .nk=6};
     aesSettings aes256Settings = {.nb = 4, .nr = 10, .nk=4};
 
-    void setMode(mode m);
-
-    const uint blockSize = 16;
-    array<array<unsigned char, nb>, 4> state;
+    using StateVector = QVector<QVector<uint8_t>>;
+    StateVector state;
 
     void subBytes(bool inv = false);
     void shiftRows(bool inv = false);
     void mixColumns(bool inv = false);
-    void addRoundKey(array<array<unsigned char, nb * (nr + 1)>, 4> key_schedule, unsigned int round = 0);
+    void addRoundKey(QVector<QVector<uint8_t>> key_schedule, unsigned int round = 0);
 
-    array<array<unsigned char, nb * (nr + 1)>, 4> keyExpansion(QVector<unsigned char> key);
+    QVector<QVector<uint8_t>> keyExpansion(QVector<unsigned char> key);
 
-    array<unsigned char, nb> leftRightShift(array<unsigned char, nb> array, unsigned int count, bool inv = false);
+    QVector<uint8_t> leftRightShift(QVector<uint8_t> array, unsigned int count, bool inv = false);
 
     uint8_t mul_by_02(uint8_t num);
     uint8_t mul_by_03(uint8_t num);
@@ -47,9 +43,12 @@ private:
     uint8_t mul_by_0e(uint8_t num);
 
 public:
-    aes();
+    enum mode {aes128, aes192, aes256};
+    aes(mode m);
+    void setMode(mode m);
 
-    array<unsigned char, 16> encrypt(array<unsigned char, 16> input_bytes, QVector<unsigned char> key);
-    array<unsigned char, 16> decrypt(array<unsigned char, 16> cipher, QVector<unsigned char>  key);
+    const uint blockSize = 16;
+    QVector<uint8_t> encrypt(QVector<uint8_t> plainBytes, QVector<uint8_t> key);
+    QVector<uint8_t> decrypt(QVector<uint8_t> plainCipher, QVector<uint8_t> key);
 };
 #endif // AES_256_H

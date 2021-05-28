@@ -21,11 +21,11 @@ public:
 
 private slots:
     void on_encryptButton_clicked();
-
     void on_decryptButton_clicked();
+    void on_comboBox_activated(const QString &arg);
 
 private:
     Ui::MainWindow *ui;
-    aes cryptor;
+    aes cryptor = aes(aes::aes256); // default mode
 };
 #endif // MAINWINDOW_H
