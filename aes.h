@@ -12,9 +12,9 @@ class aes
         uint nk;
     } settings;
 
-    aesSettings aes128Settings = {.nb = 4, .nr = 14, .nk=8};
+    aesSettings aes256Settings = {.nb = 4, .nr = 14, .nk=8};
     aesSettings aes192Settings = {.nb = 4, .nr = 12, .nk=6};
-    aesSettings aes256Settings = {.nb = 4, .nr = 10, .nk=4};
+    aesSettings aes128Settings = {.nb = 4, .nr = 10, .nk=4};
 
     using StateVector = QVector<QVector<uint8_t>>;
     StateVector state;
@@ -40,6 +40,6 @@ public:
     static QString textCompletion(QString text);
     const uint blockSize = 16;
     QVector<uint8_t> encode(QVector<uint8_t> plainBytes, QVector<uint8_t> key);
-    QVector<uint8_t> decode(QVector<uint8_t> plainCipher, QVector<uint8_t> key);
+    QVector<uint8_t> decode(QVector<uint8_t> cipherBytes, QVector<uint8_t> key);
 };
 #endif // AES_256_H
