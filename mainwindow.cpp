@@ -1,17 +1,13 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QDebug>
-
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-{
+    , ui(new Ui::MainWindow) {
     ui->setupUi(this);
 }
 
-MainWindow::~MainWindow()
-{
+MainWindow::~MainWindow() {
     delete ui;
 }
 
@@ -20,13 +16,14 @@ QString byteVectorToQString(QVector<uint8_t> vec) {
 
     for(const auto &i: vec)
         byteArray.push_back(i);
-    auto text = QString::fromLocal8Bit(byteArray);
+
+    auto text = QString::fromUtf8(byteArray);
 
     return text;
 }
 
 QVector<uint8_t> QStringToByteVector(QString text) {
-    QByteArray byteArray = text.toLocal8Bit();
+    QByteArray byteArray = text.toUtf8();
     QVector<uint8_t> textBytes;
 
     for(const auto &i : byteArray)
@@ -36,31 +33,19 @@ QVector<uint8_t> QStringToByteVector(QString text) {
 }
 
 void MainWindow::on_encryptButton_clicked() {
-    QVector<uint8_t> plainBytes = QStringToByteVector(ui->plainTextEdit->toPlainText().trimmed());
+    QVector<uint8_t> plainBytes = QStringToByteVector(aes::textCompletion(ui->plainTextEdit->toPlainText()));
     QVector<uint8_t> key = QStringToByteVector(ui->lineKeyEdit->text().trimmed());
     QString cipherBytes;
-    QVector<uint8_t> box(cryptor.blockSize);
+    QVector<uint8_t> block(cryptor.blockSize);
 
     int n = 0;
     for(const auto &i: plainBytes) {
-        box[n++] = i;
+        block[n++] = i;
 
         if(n == 16) {
-            box = cryptor.encrypt(box, key);
-            for(const auto &j : box)
-                cipherBytes += QString::number(j) + " ";
-
-            n = 0;
-        }
-    }
-
-    while(n != 0) {
-        box[n++] = 0x00;
-
-        if(n == 16) {
-            box = cryptor.encrypt(box, key);
-            for(const auto &j : box)
-                cipherBytes += QString::number(j) + " ";
+            block = cryptor.encode(block, key);
+            for(const auto &j : block)
+                cipherBytes += QString::number(j) + ":";
             n = 0;
         }
     }
@@ -70,29 +55,29 @@ void MainWindow::on_encryptButton_clicked() {
 }
 
 void MainWindow::on_decryptButton_clicked() {
-    QString cipherBytes = ui->plainTextEdit_2->toPlainText();
-    QVector<unsigned char> key = QStringToByteVector(ui->lineKeyEdit->text());
-    QVector<unsigned char> plainBytes;
-    QVector<uint8_t> box(cryptor.blockSize);
+    auto cipherBytes = ui->plainTextEdit_2->toPlainText();
+    auto key = QStringToByteVector(ui->lineKeyEdit->text());
+    QVector<uint8_t> plainBytes;
+    QVector<uint8_t> block(cryptor.blockSize);
 
     int n = 0;
     QString s;
     for(const auto &i : cipherBytes) {
-        if(i == " ") {
-            if(s != "") box[n++] = s.toInt();
+        if(i == ":") {
+            if(s != "") block[n++] = s.toInt();
             s = "";
         }
         else s = s + i;
 
         if(n == 16) {
-            box = cryptor.decrypt(box, key);
-            for(auto j:box) plainBytes.push_back(j);
+            block = cryptor.decode(block, key);
+            for(const auto &j : block) plainBytes.push_back(j);
             n = 0;
         }
     }
 
     ui->plainTextEdit->clear();
-    ui->plainTextEdit->appendPlainText(byteVectorToQString(plainBytes));
+    ui->plainTextEdit->setPlainText(byteVectorToQString(plainBytes).trimmed());
 }
 
 void MainWindow::on_comboBox_activated(const QString &arg) {
@@ -104,4 +89,3 @@ void MainWindow::on_comboBox_activated(const QString &arg) {
     else
         cryptor.setMode(aes::mode::aes256);
 }
-

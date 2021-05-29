@@ -4,15 +4,8 @@
 #include <QVector>
 #include <QByteArray>
 
-using std::array;
-
-const int nb = 4;
-const int nr = 14;
-const int nk = 8;
-
 class aes
 {
-private:
     struct aesSettings {
         uint nb;
         uint nr;
@@ -29,11 +22,9 @@ private:
     void subBytes(bool inv = false);
     void shiftRows(bool inv = false);
     void mixColumns(bool inv = false);
-    void addRoundKey(QVector<QVector<uint8_t>> key_schedule, unsigned int round = 0);
-
-    QVector<QVector<uint8_t>> keyExpansion(QVector<unsigned char> key);
-
-    QVector<uint8_t> leftRightShift(QVector<uint8_t> array, unsigned int count, bool inv = false);
+    void addRoundKey(QVector<QVector<uint8_t>> keySchedule, uint round = 0);
+    QVector<QVector<uint8_t>> keyExpansion(QVector<uint8_t> key);
+    void leftRightShift(QVector<uint8_t> &array, uint count, bool inv = false);
 
     uint8_t mul_by_02(uint8_t num);
     uint8_t mul_by_03(uint8_t num);
@@ -44,11 +35,11 @@ private:
 
 public:
     enum mode {aes128, aes192, aes256};
-    aes(mode m);
+    aes(mode m = aes256);
     void setMode(mode m);
-
+    static QString textCompletion(QString text);
     const uint blockSize = 16;
-    QVector<uint8_t> encrypt(QVector<uint8_t> plainBytes, QVector<uint8_t> key);
-    QVector<uint8_t> decrypt(QVector<uint8_t> plainCipher, QVector<uint8_t> key);
+    QVector<uint8_t> encode(QVector<uint8_t> plainBytes, QVector<uint8_t> key);
+    QVector<uint8_t> decode(QVector<uint8_t> plainCipher, QVector<uint8_t> key);
 };
 #endif // AES_256_H
